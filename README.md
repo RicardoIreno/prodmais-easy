@@ -119,5 +119,10 @@ RUN apt-get update && apt-get install -y \ ...
 sudo apt-get update && apt-get install -y \
 ```
 
+Os passos contidos neste README ainda (as configurações de variáveis e comandos do PHP) ainda precisaram ser executados após executados os comandos no Dockerfile.
+
+Para mais dúvidas, acesse https://atendimento.unifesp.br/
+
+
 
 
