@@ -1,0 +1,64 @@
+services:
+  prod_es:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.17.0
+    container_name: ${ESNODE01_NAME}
+    environment:
+      - node.name=${ESNODE01_NAME}
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - xpack.security.enabled=false
+      - path.repo=/usr/share/elasticsearch/backups
+      - ELASTICSEARCH_USERNAME=${ELASTICSEARCH_USERNAME}
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+    volumes:
+      - esprodmais-data:/usr/share/elasticsearch/data
+      - esprodmais-backups:/usr/share/elasticsearch/backups
+      - certs:/usr/share/elasticsearch/config/certs
+    ports:
+      - "9200:9200"
+    networks:
+      - esp-net
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -s http://localhost:9200/_cluster/health | grep -vq '\"status\":\"red\"'" ]
+      interval: 20s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+
+
+  prod_app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: prod_app
+    ports:
+      - "8080:80"
+    volumes:
+      - ./app:/var/www/html:z
+      - ./certs/http_ca.crt:/var/www/html/inc/http_ca.crt:ro
+    networks:
+      - esp-net
+    depends_on:
+      - prod_es
+    restart: unless-stopped
+
+volumes:
+  esprodmais-data:
+    driver: local
+  esprodmais-backups:
+    driver: local
+  certs:
+    driver: local
+
+networks:
+  esp-net:
+    driver: bridge
